@@ -1,0 +1,69 @@
+
+<!DOCTYPE html>
+<html lang="">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>NETPIE LED Control</title>
+
+        <!-- Bootstrap CSS -->
+        <link href="https://netdna.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet">
+
+    </head>
+    <body>
+        <div class="navbar-header">
+            <a class="navbar-brand" href="#">NETPIE LED Control</a>            
+        </div>
+        
+        <div class="container">
+        <h3 class="text-center" id="status"></h3>
+        
+        <form action="#" method="POST" role="form">
+            <legend>Switch</legend>
+        
+            <div class="form-group">                
+                <button type="button" class="btn btn-default" id="on">ON</button>  
+                <button type="button" class="btn btn-default" id="off">OFF</button>              
+            </div>
+        </form>
+        </div>
+        <!-- jQuery -->
+        <script src="https://code.jquery.com/jquery.js"></script>
+        <!-- Bootstrap JavaScript -->
+        <script src="https://netdna.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+        <script src="https://cdn.netpie.io/microgear.js"></script>
+        <script>
+
+            $(function(){
+
+                const APPID = "PhuketCODE";
+                const KEY = "QQKAfRrmczSvfwO";
+                const SECRET = "j0gqYsHA5OZi2xmMjRZTl3RaS";
+                const ALIAS = "switchControler";
+
+                var microgear = Microgear.create({
+                    key: KEY,
+                    secret: SECRET,
+                    alias : ALIAS
+                });   
+                
+                $("#on").click(function(){
+                    microgear.chat('Light1','0');
+                });
+
+                $("#off").click(function(){
+                    microgear.chat('Light1','1');
+                });                             
+
+                microgear.on('connected', function() { // event connected จะทำงานเมื่อเชื่อมต่อ netpie เสร็จ *-เป็น event แรกที่ทำงานหลังเชื่อมต่อ netpie-*
+                    $("#status").html("Connected to NETPIE as " + ALIAS);
+                });
+                    
+                microgear.connect(APPID);                          
+                
+            });
+
+        </script>
+
+

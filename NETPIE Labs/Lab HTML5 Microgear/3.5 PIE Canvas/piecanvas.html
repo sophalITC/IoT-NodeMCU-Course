@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252"></head><body><header>
+	<script src="https://cdn.netpie.io/microgear.js"></script>
+	<script>
+	    const APPID     = "piedraw";
+	    const APPKEY    = "ZOOTeEfaHYZSid1";
+	    const APPSECRET = "JOEH90IARhHIzeh2uTjXnaBJR";
+	</script>
+</header>
+
+
+	<div style="position: relative;">
+		<canvas id="toolCanvas" height="36" width="1280" style="background-color: white; cursor:pointer; position: absolute; left: 0; top: 0; z-index: 1;"></canvas>
+		<canvas id="drawCanvas" height="960" width="1280" style="background-color: white; cursor:pointer; position: absolute; left: 0; top: 0; z-index: 0;"></canvas>
+
+		<img src="qr.jpg" style="background-color: white; position: absolute; right: 0px; top: 0px; width:250px; height:250px; z-index: 2;">
+	</div>
+
+	<script>
+
+		const BTNSIZE = 30; BTNGAP = 5;
+		var colorList = ['#222222','#ac725e','#a06be0','#fa3a9c','#f93a22','#ff7537','#ffad46','#eeee22','#42d6B2','#4677b5','#1bd118','#53fc5c'];
+		var tipList = [2,3,4,6,8,12,16];
+
+		var drawBuffer = '';
+		var playTick;
+		var mX=0, mY=0;
+		var drawMode = 0; recMode = 0;
+		var myID = Math.floor(Math.random()*100000).toString();
+		var lineColor = colorList[0];
+		var lineWidth = tipList[1];
+		var member = [];
+
+		var recBuffer = [];
+		var recStartTime = 0;
+
+		const toolOffset1 = 0;
+		const toolOffset2 = colorList.length*(BTNSIZE+BTNGAP)+2*BTNGAP;
+		const toolOffset3 = toolOffset2+tipList.length*(BTNSIZE+BTNGAP)+2*BTNGAP;
+
+		var drawCanvas = document.getElementById("drawCanvas");
+		var dg = drawCanvas.getContext("2d");
+		var drawCanvasRect = drawCanvas.getBoundingClientRect();
+
+		var toolCanvas = document.getElementById("toolCanvas");
+		var tg = toolCanvas.getContext("2d");
+		var toolCanvasRect = toolCanvas.getBoundingClientRect();
+
+		function onToolDown(e) {
+			mX = e.pageX - toolCanvasRect.left;
+			mY = e.pageY - toolCanvasRect.top;
+
+			if (mX>toolOffset3) {
+				var no = Math.floor((mX-toolOffset3) / (BTNSIZE+BTNGAP));
+				switch (no) {
+					case 0   : 	dg.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+								break;
+					case 1 : 	if (recMode==0) {
+									recStartTime = Date.now();
+									recBuffer = [];
+									recMode = 1;
+								} else if (recMode==1) recMode = 0;							
+								drawToolBar();
+								break;
+					case 2 : 	if (recMode==0) recMode = 2; else  if (recMode==2) recMode = 0;
+								playTick = 0;
+								recStartTime = Date.now();
+								drawToolBar();
+								break;
+				}
+			}
+			else if (mX>toolOffset2) {
+				var no = Math.floor((mX-toolOffset2) / (BTNSIZE+BTNGAP));
+				lineWidth = tipList[no];				
+				drawToolBar();
+			}
+			else if (mX>toolOffset1) {
+				var no = Math.floor((mX-toolOffset1)/ (BTNSIZE+BTNGAP));
+				if (no >= 0 && no<colorList.length) {
+					lineColor = colorList[no];
+					drawToolBar();
+				}
+			}
+		}
+
+		function onPenDown(e) {
+			mX = e.pageX - drawCanvasRect.left;
+			mY = e.pageY - drawCanvasRect.top;
+
+			if (mY > BTNGAP+BTNSIZE) {
+				dg.moveTo(mX,mY);
+				drawMode = 1;
+			}
+		}
+
+		function onPenUp(e) {
+		  drawMode = 0;
+		}
+
+		function onPenMove(e) {
+		  if (drawMode == 1) {
+			  dg.beginPath();				
+			  dg.lineWidth = lineWidth;
+			  dg.lineTo(mX,mY);
+			  if (!drawBuffer) drawBuffer = mX+','+mY+';';
+			  mX = e.pageX - drawCanvasRect.left;
+			  mY = e.pageY - drawCanvasRect.top;
+
+			  dg.lineJoin = dg.lineCap = 'round';
+			  dg.strokeStyle = lineColor;
+			  dg.lineTo(mX,mY);
+			  dg.stroke();
+			  drawBuffer += mX+','+mY+';';
+
+			  if (e.target == drawCanvas) {
+			    e.preventDefault();
+			  }
+		  }
+		}
+
+		toolCanvas.addEventListener('touchstart', onToolDown);
+		toolCanvas.addEventListener('mousedown', onToolDown);
+		drawCanvas.addEventListener('touchstart', onPenDown);
+		drawCanvas.addEventListener('mousedown', onPenDown);
+		drawCanvas.addEventListener('touchend', onPenUp);
+		drawCanvas.addEventListener('mouseup', onPenUp);
+		drawCanvas.addEventListener('touchmove', onPenMove);
+		drawCanvas.addEventListener('mousemove', onPenMove);
+
+		function drawToolBar() {
+
+			function drawColorButton(x,y,col,selected) {
+				tg.beginPath();
+				tg.fillStyle = col;
+				tg.fillRect(x,y,BTNSIZE,BTNSIZE);
+				if (selected) {
+					tg.fillStyle = '#ffffff';
+					tg.arc(x+BTNSIZE/2,y+BTNSIZE/2,(BTNSIZE-18)/2,0,2*Math.PI,false);
+					tg.fill();
+				}
+				tg.fill();
+			}
+
+			function drawTipButton(x,y,size,selected) {
+				tg.beginPath();
+		  		tg.lineWidth = 2;
+				tg.strokeStyle = selected?'#777777':'#cccccc';
+				tg.rect(x,y,BTNSIZE,BTNSIZE);
+				tg.stroke();
+
+				tg.beginPath();
+				tg.fillStyle = selected?'#777777':'#cccccc';
+				tg.arc(x+BTNSIZE/2,y+BTNSIZE/2,size/2,0,2*Math.PI);
+				tg.fill();
+			}
+
+			function drawToolButton(x,y,type,selected) {
+				tg.beginPath();
+		  		tg.lineWidth = 2;
+		  		tg.lineJoin = tg.lineCap = 'round';
+		  		tg.strokeStyle = selected?'#bb2222':'#ddbbbb';
+				tg.rect(x,y,BTNSIZE,BTNSIZE);
+				tg.stroke();
+
+				switch (type) {
+					case 0 :
+							tg.beginPath();
+							tg.strokeStyle = '#aaaa00';
+							tg.moveTo(x+10,y+10); tg.lineTo(x+BTNSIZE-10,y+BTNSIZE-10); tg.moveTo(x+BTNSIZE-10,y+10); tg.lineTo(x+10,y+BTNSIZE-10);
+							tg.stroke();
+							break;
+					case 1 :
+							tg.beginPath();
+							tg.fillStyle = tg.strokeStyle = '#ff7a7a';
+							tg.arc(x+BTNSIZE/2,y+BTNSIZE/2,BTNSIZE/2-9,0,2*Math.PI,false);
+							selected?tg.fill():tg.stroke();
+							break;
+					case 2 :
+							tg.beginPath();
+							tg.fillStyle = tg.strokeStyle = '#5acc5a';
+							tg.moveTo(x+8,y+8); tg.lineTo(x+BTNSIZE-8,y+BTNSIZE/2); tg.lineTo(x+8,y+BTNSIZE-8); tg.lineTo(x+8,y+8)
+							selected?tg.fill():tg.stroke();
+							break;
+				}
+			}
+
+			for (var i=0; i<colorList.length; i++) {
+				drawColorButton(toolOffset1+(BTNSIZE+BTNGAP)*i,BTNGAP,colorList[i],colorList[i]==lineColor);
+			}
+		  	for (var i=0; i<tipList.length; i++) {
+				drawTipButton(toolOffset2+(BTNSIZE+BTNGAP)*i,BTNGAP,tipList[i],lineWidth==tipList[i]);
+			}
+		  	for (var i=0; i<3; i++) {
+				drawToolButton(toolOffset3+(BTNSIZE+BTNGAP)*i,BTNGAP,i,i>0&&recMode==i);
+			}
+		}
+
+		function drawHeart(x,y,phase,style) {
+			tg.beginPath();
+			tg.fillStyle = '#ffffff';
+			tg.fillRect(x-25,y-25,50,50);
+			if (style==0) return;
+			tg.beginPath();
+			tg.lineWidth = 2;
+			tg.strokeStyle = '#cccccc';
+			tg.fillStyle = '#ff6644';
+			for (var t=0; t<2*Math.PI; t+=0.2) {
+				var k = 1.5*Math.exp(-10*Math.pow(0.5-phase,2));
+				var px = (17-k)*Math.pow(Math.sin(t),3);
+				var py = 3*k+(10+k)*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t);
+				tg.lineTo(x+px, y-py);
+			}
+			style==2?tg.fill():tg.stroke();
+		}
+		var phase = 0;
+		setInterval(function() {
+			if (member.length > 0) phase = phase>1?0:phase+0.1;
+			drawHeart(toolOffset3+3*(BTNSIZE+BTNGAP)+30,20,phase, microgear.connected()?member.length>0?2:1:0 );
+		},50);
+
+
+		var microgear = Microgear.create({
+			key: APPKEY,
+			secret: APPSECRET,
+			alias : myID
+		});
+
+		microgear.on('message',function(topic,msg) {
+			if (topic == '/'+APPID+'/draw/'+myID) return;
+			var dlist = msg.split(';');
+			dg.strokeStyle = dlist[0];
+			dg.lineWidth = dlist[1];
+			dg.lineJoin = dg.lineCap = 'round';
+
+			for (var i=2; i <dlist.length-1; i++) {
+				var a = dlist[i].split(',');
+				if (i>2) dg.lineTo(a[0],a[1]);
+				else {
+					dg.beginPath();
+					dg.moveTo(a[0],a[1]);
+				}
+			}
+			dg.stroke();
+		});
+
+		microgear.on('connected', function() {
+			microgear.subscribe('/draw/+');
+	   		console.log('myID is '+myID);
+			console.log('Connected...');
+		});
+
+		microgear.on('disconnected', function() {
+			//alert('hey');
+		});
+
+		microgear.on('present', function(m) {
+			if (m.type=='online' && m.alias != myID) {
+				if (member.indexOf(m.alias)==-1) member.push(m.alias);
+			}
+		});
+
+		microgear.on('absent', function(m) {
+			if (m.type=='offline') delete member.splice(member.indexOf(m.alias),1);
+		});
+
+		drawToolBar();
+		microgear.connect(APPID);
+
+		setInterval(function() {
+			if (recMode != 2) {
+				if (drawBuffer) {
+					var data = lineColor+';'+lineWidth+';'+drawBuffer;
+					microgear.publish('/draw/'+myID, data);
+					if (recMode == 1) {
+						if (recBuffer.length==0) recStartTime = Date.now();
+						recBuffer.push(Date.now()-recStartTime+'>'+data);
+					}
+					drawBuffer = '';
+				}
+			}
+			else {
+				if (playTick < recBuffer.length) {
+					var d = recBuffer[playTick].split('>');
+					if (Date.now() >= recStartTime+parseInt(d[0])) {
+						microgear.publish('/draw/play_'+myID, d[1]);
+						playTick++;
+					}
+				}
+				else {
+					recMode = 0;
+					drawToolBar();
+				}
+			}
+		},200);
+
+	</script>
+
+</body></html>

@@ -1,0 +1,60 @@
+<script src="https://cdn.netpie.io/microgear.js"></script>
+
+<script>
+	const APPID = "apple";	// AppID
+	const KEY = "i5IWVBTc6aLOGiW";		// Key
+	const SECRET = "xgmHCRsPW7M7WBJGlq4oQmFm8";	// Secret
+	const ALIAS = "PANITA"; // ตั้งชื่ออุปกรณ์ของเรา Alias Name
+	var topic = "/NECTEC"; // สร้างตัวแปร topic ขึ้นมารอรับการกำหนด topic
+
+	var microgear = Microgear.create({ // สร้างตัวแปร เพื่อเก็บ Config Microgear อยู่ในรูปของ JSON OBJECTS
+		key: KEY,					// โดยตัวแปรที่เก็บ Config เราจะสามารถนำไปใช้งาน Event ของ microgear ได้
+		secret: SECRET,
+		alias: ALIAS 
+	});
+
+	microgear.on('message',function(topic,msg) { // event message จะทำงานเมื่อข้อความถูกส่งผ่าน NETPIE มายังอุปกรณ์ของเรา
+		var p = document.createElement("p"); // สร้าง element p เป็นแสดงข้อความในรูปของ paragraph
+		p.appendChild(document.createTextNode(msg)); // นำ msg ข้อความที่ถูกส่งผ่าน NETPIE จาก event message มาเก็บไว้ใน element p จะอยู่ในรูปแแบบ <p> msg </p>
+		document.getElementById("chat_field").appendChild(p); // นำ <p> msg </p> มาแสดงที่ id chat_field 
+	});
+
+	microgear.on('connected', function() { // event connected จะทำงานเมื่อเชื่อมต่อ netpie เสร็จ *-เป็น event แรกที่ทำงานหลังเชื่อมต่อ netpie-*
+		document.getElementById("alias").innerHTML = ALIAS+" is now connected to NETPIE"; // นำ ALIAS ที่เราตั้งชื่อขึ้นไปแสดงที่ id alias
+	});
+		
+	microgear.connect(APPID); // ให้ device เชื่อมต่อกับ netpie
+	
+	function send() {
+		var message = document.getElementById("msg").value; // นำ message ที่เราต้องการส่งไปหา topic มาเก็บไว้ในตัวแปร message
+		microgear.publish(topic, ALIAS + ": " + message); // ทำการส่งข้อความไปยัง topic โดยข้อความที่ส่งไปก็คือ ALIAS ของเรากับ message ที่เราต้องการส่งไป เพื่อบอกให้รู้ว่าใครเป็นคนส่งข้อความนี้ไป
+		document.getElementById("msg").value = ""; // หลังจากส่งข้อความให้ช่องใส่ข้อความถูกเคลียร์
+	}
+	
+	function join() {
+		//topic = "/" + document.getElementById("topic").value; // นำ topic ที่เราต้องการมาใส่ไว้ในตัวแปร topic 
+		microgear.subscribe(topic); // กดสมัครห้องที่เราต้องการ *-ห้อง = topic-*
+	}
+</script>
+
+<!-- แสดงชื่อ alias ที่เราตั้งขึ้น -->
+<div style="text-align: center;">
+	<p id="alias" style="font-size: 40px; font-weight: bold"></p>
+</div>
+
+<!-- กำหนด topic ที่เราต้องการสมัครใช้งาน -->
+<div style="text-align: center;">
+	<label> Join Room: <input type="text" id="topic"/></label> <!-- ใส่ topic ที่เราต้องการสมัครใช้งาน -->
+	<button id="send_btn" onclick="join()">Join</button> <!-- ปุ่มสำหรับกดสมัคร topic ที่ต้องการ -->
+</div>
+
+<!-- สำหรับป้อนข้อมูล -->
+<div style="text-align: center;">
+	<label> Message: <input type="text" id="msg"/></label> <!-- ใส่ message ที่เราต้องการส่ง -->
+	<button id="send_btn" onclick="send()">Send</button> <!-- ปุ่มสำหรับกดส่งข้อความ -->
+</div>
+
+<!-- ส่วนแสดงข้อความที่ถูกส่งผ่าน NETPIE จาก event message -->
+<div>
+	<p id="chat_field"></p>
+</div>

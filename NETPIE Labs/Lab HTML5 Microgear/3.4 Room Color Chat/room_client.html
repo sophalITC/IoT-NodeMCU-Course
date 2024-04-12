@@ -1,0 +1,61 @@
+﻿<script src="https://cdn.netpie.io/microgear.js"></script>    <!-- Microgaer library -->
+
+<script>
+	const APPID = "apple" 	//Application ID ของอุปกรณ์ที่เชื่อมต่อ NETPIE
+		const KEY = "nr3BpJ5hh0LN4Xv";	// Key ของอุปกรณ์ที่เชื่อมต่อ NETPIE
+	const SECRET = "wRhgtGvB3lo9T6TlI8xhp27wD"; //Secret ของอุปกรณ์ที่เชื่อมต่อ NETPIE
+
+
+	const ALIAS = "htmlgear";		// ชื่ออุปกรณ์ที่เชื่อมต่อ NETPIE
+	var slot = your_slot; 	// ใส่ slot number ของผู้ใช้ที่ได้รับ assign
+
+	var microgear = Microgear.create({
+	   key: KEY,
+	   secret: SECRET,
+	   alias : ALIAS
+	});
+
+	function getColor(){
+	   return '#' + Math.random().toString(16).slice(2, 8).toUpperCase();
+	}
+
+	microgear.on('message',function(topic,msg) { //ตรวจพบข้อความที่ส่งมายังอุปกรณ์
+                //กำหนดข้อความให้แสดงผลใน tag id ชื่อ data
+	   document.getElementById("data").innerHTML = msg; 
+	});
+
+	microgear.on('connected', function() { //ตรวจสอบเมื่อเชื่อมต่ออุปกรณ์กับ NETPIE
+	   microgear.setAlias(ALIAS);  //กำหนดชื่ออุปกรณ์ที่เชื่อมต่อกับ NETPIE
+                  // แสดงข้อความเมื่อเชื่อมต่ออุปกรณ์กับ NETPIE
+	   document.getElementById("data").innerHTML = "Now I am connected with netpie..."; 		
+                 // แสดงข้อความเมื่อเชื่อมต่ออุปกรณ์กับ NETPIE
+
+	   setInterval(function() {	 // กำหนดให้ทำงานตลอดเวลาทุกๆ 3000 มิลลิวินาที
+		var color = getColor();
+                            // ส่งข้อความไปยังอุปกรณ์ชื่อ htmlgear ด้วย NETPIE
+		microgear.publish("/billboard/slot/"+slot,color);
+		document.getElementById("data").innerHTML = "Publish color : "+color;
+		document.body.style.backgroundColor=color;	
+		},2000);
+	});
+
+	microgear.on('disconnected', function() {	//ตรวจสอบเมื่อตัดการเชื่อมต่ออุปกรณ์กับ NETPIE
+                 // แสดงข้อความเมื่อตัดการเชื่อมต่ออุปกรณ์กับ NETPIE
+	   document.getElementById("data").innerHTML = "Now I am disconnected with netpie..."; 		
+                 
+	});
+
+	// ตรวจพบอุปกรณ์ที่เชื่อมต่อ NETPIE ด้วย APPID เดียวกัน
+	microgear.on('present', function(event) {	
+		console.log(event);
+	});
+
+	//ตรวจพบเหตุการณ์ที่อุปกรณ์เคยเชื่อมต่อ NETPIE ด้วย APPID เดียวกันหายไป
+	microgear.on('absent', function(event) {			
+		console.log(event);
+	});
+
+	microgear.connect(APPID);  // เชื่อมอุปกรณ์กับ NETPIE
+</script>
+
+<div id="data">_____</div>

@@ -1,0 +1,85 @@
+﻿<script src="https://cdn.netpie.io/microgear.js"></script>    <!-- Microgaer library -->
+
+<style>
+	#rgb {
+		width:100%;
+		font-size: 50px;
+		vertical-align: middle;
+	}
+	.box {
+	   	float: left;
+	   	border: 1px solid black;
+	   	margin-right: 50px;
+		margin-bottom: 20px;
+	}
+	.boxcolor{
+		width: 250px;
+		padding: 10px;
+		display: inline-block;
+		color: #FFF;
+		background-color: #FFF;
+	}
+	.right {
+		text-align: center;
+		width: 150px;
+		padding: 10px;
+		display: inline-block;
+		color: #FFF;
+		background-color: #000;
+	}	
+</style>
+
+<div id="data">_____</div>
+<p/>
+<div id="rgb"></div>
+
+<script>
+	var numberbox = 35;
+	var htmlbox = "";
+	
+	for(var i=0; i<numberbox; i++){
+		htmlbox+='<div class="box"><div class="right">'+(i+1)+'</div><div class="boxcolor" id="'+(i+1)+'">'+i+'</div></div>';
+	}
+	document.getElementById("rgb").innerHTML = htmlbox;
+
+	const APPID = "apple" 	//Application ID ของอุปกรณ์ที่เชื่อมต่อ NETPIE
+	const KEY = "nr3BpJ5hh0LN4Xv";	// Key ของอุปกรณ์ที่เชื่อมต่อ NETPIE
+	const SECRET = "wRhgtGvB3lo9T6TlI8xhp27wD"; //Secret ของอุปกรณ์ที่เชื่อมต่อ NETPIE
+	
+
+	const ALIAS = "billboard";			// ชื่ออุปกรณ์ที่เชื่อมต่อ NETPIE
+
+	var microgear = Microgear.create({
+		key: KEY,
+		secret: SECRET,
+		alias : ALIAS
+	});
+
+	microgear.on('message',function(topic,msg) {	// ตรวจพบข้อความที่ส่งมายังอุปกรณ์
+		console.log(topic+" : "+msg);
+		if(topic.indexOf("/billboard/slot")!=-1){
+			if(msg.startsWith('#') || msg.startsWith('rgb(')){
+				var m = topic.split("/billboard/slot/");
+				document.getElementById(m[1]).style.color = msg;
+				document.getElementById(m[1]).style.backgroundColor = msg;
+			}
+		}
+	});
+	microgear.on('connected', function() {	  	// ตรวจสอบเมื่อเชื่อมต่ออุปกรณ์กับ NETPIE
+		microgear.setAlias(ALIAS);		// กำหนดชื่ออุปกรณ์ที่เชื่อมต่อกับ NETPIE
+                            // แสดงข้อความเมื่อเชื่อมต่ออุปกรณ์กับ NETPIE
+		document.getElementById("data").innerHTML = "Now I am connected with netpie..."; 		
+		microgear.subscribe("/billboard/slot/+");
+	});
+	microgear.on('disconnected', function() {	// ตรวจสอบเมื่อตัดการเชื่อมต่ออุปกรณ์กับ NETPIE
+		// แสดงข้อความเมื่อตัดการเชื่อมต่ออุปกรณ์กับ NETPIE
+		document.getElementById("data").innerHTML = "Now I am disconnected with netpie..."; 		
+	});
+	microgear.on('present', function(event) {	// ตรวจพบอุปกรณ์ที่เชื่อมต่อกับ NETPIE ด้วย APPID เดียวกัน
+		console.log(event);
+	});
+	microgear.on('absent', function(event) {	// ตรวจพบว่าอุปกรณ์ที่เคยเชื่อมต่อกับ NETPIE ด้วย APPID เดียวกันหายไป
+		console.log(event);
+	});
+	microgear.connect(APPID);  // เชื่อมอุปกรณ์กับ NETPIE
+</script>

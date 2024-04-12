@@ -1,0 +1,40 @@
+<script src="https://cdn.netpie.io/microgear.js"></script>
+
+<script>
+   const APPID = "KEPPA";				
+   const KEY = "q7QraG5OtxlVC8l";					
+   const SECRET = "YoSc2o0wrXZfKm3VvCmLTYfwt";	
+
+   const ALIAS = "switch";
+
+  var microgear = Microgear.create({
+    key: KEY,
+    secret: SECRET,
+    alias : ALIAS
+  });
+
+ function toggle(cmd) {
+   microgear.chat('servo',cmd);	
+ }
+	
+  microgear.on('message',function(topic,msg) {
+      document.getElementById("data").innerHTML = msg; 
+      if(msg=="1"){
+          document.getElementById("button").innerText="R";
+      }else if(msg=="0"){
+          document.getElementById("button").innerText="off";
+      }
+  });
+  microgear.on('connected', function() {
+    microgear.setAlias(ALIAS);
+    document.getElementById("data").innerHTML = "Now I am connected with netpie...";
+  });
+
+microgear.connect(APPID);
+</script>
+
+<div id="data">_____</div>
+<center>
+<button onclick="toggle('on')" id="button">on</button>
+<button onclick="toggle('off')" id="button">off</button>
+</center>

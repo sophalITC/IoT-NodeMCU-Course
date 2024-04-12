@@ -1,0 +1,50 @@
+<script src="https://cdn.netpie.io/microgear.js"></script> <!-- อ้างถึง library microgear ที่เราต้องการใช้งาน -->
+
+<script>
+	const APPID = "YOUR APPID";	// ใส่ AppID (Application ID)
+	const KEY = "YOUR_KEY";		// ใส่ Key
+	const SECRET = "YOUR_SECRET";	// ใส่ Secret
+	const ALIAS = "ALICE"; // ตั้งชื่ออุปกรณ์ของเรา Alias Name
+
+	var microgear = Microgear.create({ // สร้างตัวแปร เพื่อเก็บ Config Microgear อยู่ในรูปของ JSON OBJECTS
+		key: KEY,					// โดยตัวแปรที่เก็บ Config เราจะสามารถนำไปใช้งาน Event ของ microgear ได้
+		secret: SECRET,
+		alias: ALIAS 
+	});
+
+	microgear.on('message',function(topic,msg) { // event message จะทำงานเมื่อข้อความถูกส่งผ่าน NETPIE มายังอุปกรณ์ของเรา
+		var p = document.createElement("p"); // สร้าง element p เป็นแสดงข้อความในรูปของ paragraph
+		p.appendChild(document.createTextNode(msg)); // นำ msg ข้อความที่ถูกส่งผ่าน NETPIE จาก event message มาเก็บไว้ใน element p จะอยู่ในรูปแแบบ <p> msg </p>
+		document.getElementById("chat_field").appendChild(p); // นำ <p> msg </p> มาแสดงที่ id chat_field 
+	});
+
+	microgear.on('connected', function() { // event connected จะทำงานเมื่อเชื่อมต่อ netpie เสร็จ *-เป็น event แรกที่ทำงานหลังเชื่อมต่อ netpie-*
+	document.getElementById("alias").innerHTML = ALIAS+" is now connected to NETPIE"; // นำ ALIAS ที่เราตั้งชื่อขึ้นไปแสดงที่ id alias
+	});
+
+	microgear.connect(APPID); // ให้ device เชื่อมต่อกับ netpie
+	
+	function send() { // สร้าง function สำหรับส่งข้อความผ่าน netpie
+		var target = document.getElementById("target").value; // นำชื่อ target ที่เราต้องการส่งไปหามาเก็บไว้ในตัวแปร target
+		var message = document.getElementById("msg").value; // นำ message ที่เราต้องการส่งไปหา target มาเก็บไว้ในตัวแปร message
+		microgear.chat(target, ALIAS + ": " + message); // ทำการส่งข้อความไปยัง target โดยข้อความที่ส่งไปก็คือ ALIAS ของเรากับ message ที่เราต้องการส่งไป เพื่อบอกให้รู้ว่าใครเป็นคนส่งข้อความนี้ไป
+		document.getElementById("msg").value = ""; // หลังจากส่งข้อความให้ช่องใส่ข้อความถูกเคลียร์
+	}
+</script>
+
+<!-- แสดงชื่อ alias ที่เราตั้งขึ้น -->
+<div style="text-align: center;">
+	<p id="alias" style="font-size: 40px; font-weight: bold"></p>
+</div>
+
+<!-- สำหรับป้อนข้อมูล -->
+<div style="text-align: center;">
+	<label> Send to: <input type="text" id="target"/></label> <!-- ใส่ชื่อ target ที่เราต้องการส่งข้อความไปหา -->
+	<label> Message: <input type="text" id="msg"/></label> <!-- ใส่ message ที่เราต้องการส่ง -->
+	<button id="send_btn" onclick="send()">Send</button> <!-- ปุ่มสำหรับกดส่งข้อความ -->
+</div>
+
+<!-- ส่วนแสดงข้อความที่ถูกส่งผ่าน NETPIE จาก event message -->
+<div>
+	<p id="chat_field"></p>
+</div>
